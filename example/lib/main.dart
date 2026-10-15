@@ -97,7 +97,6 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
     text: 'magnet:?xt=urn:btih:4EZLKDYRLJAGQDXSIIMYEDLBC5V7ZTO4&dn=&tr=http%3A%2F%2F104.143.10.61%3A8000%2Fannounce&tr=udp%3A%2F%2F104.143.10.61%3A8000%2Fannounce&tr=http%3A%2F%2Ftracker.openbittorrent.com%3A80%2Fannounce&tr=http%3A%2F%2Ftracker3.itzmx.com%3A6961%2Fannounce&tr=http%3A%2F%2Ftracker4.itzmx.com%3A2710%2Fannounce&tr=http%3A%2F%2Ftracker.publicbt.com%3A80%2Fannounce&tr=http%3A%2F%2Ftracker.prq.to%2Fannounce&tr=http%3A%2F%2Fopen.acgtracker.com%3A1096%2Fannounce&tr=https%3A%2F%2Ft-115.rhcloud.com%2Fonly_for_ylbud&tr=http%3A%2F%2Ftracker1.itzmx.com%3A8080%2Fannounce&tr=http%3A%2F%2Ftracker2.itzmx.com%3A6961%2Fannounce&tr=udp%3A%2F%2Ftracker1.itzmx.com%3A8080%2Fannounce&tr=udp%3A%2F%2Ftracker2.itzmx.com%3A6961%2Fannounce&tr=udp%3A%2F%2Ftracker3.itzmx.com%3A6961%2Fannounce&tr=udp%3A%2F%2Ftracker4.itzmx.com%3A2710%2Fannounce&tr=http%3A%2F%2Fnyaa.tracker.wf%3A7777%2Fannounce&tr=http%3A%2F%2Fopentracker.acgnx.se%2Fannounce&tr=http%3A%2F%2Ftr.bangumi.moe%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.ktxp.com%3A6868%2Fannounce&tr=http%3A%2F%2Ftracker.ktxp.com%3A7070%2Fannounce&tr=http%3A%2F%2Fshare.camoe.cn%3A8080%2Fannounce&tr=http%3A%2F%2F61.154.116.205%3A8000%2Fannounce&tr=http%3A%2F%2Fbt.rghost.net%3A80%2Fannounce&tr=http%3A%2F%2Ft.acg.rip%3A6699%2Fannounce&tr=http%3A%2F%2F94.228.192.98%2Fannounce&tr=http%3A%2F%2Ftracker.btcake.com%2Fannounce&tr=http%3A%2F%2Fbtfile.sdo.com%3A6961%2Fannounce&tr=http%3A%2F%2Fexodus.desync.com%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker3.torrentino.com%2Fannounce&tr=http%3A%2F%2Ftracker2.torrentino.com%2Fannounce&tr=http%3A%2F%2Fpubt.net%3A2710%2Fannounce&tr=http%3A%2F%2Fbigfoot1942.sektori.org%3A6969%2Fannounce&tr=http%3A%2F%2Ft.nyaatracker.com%2Fannounce&tr=http%3A%2F%2Fbt.sc-ol.com%3A2710%2Fannounce&tr=https%3A%2F%2Ftracker.zhuqiy.com%3A443%2Fannounce&tr=https%3A%2F%2Ftracker.yemekyedim.com%3A443%2Fannounce&tr=https%3A%2F%2Ftracker.nekomi.cn%3A443%2Fannounce&tr=https%3A%2F%2Ftracker.moeking.me%3A443%2Fannounce&tr=https%3A%2F%2Ftorrents.tmtime.dev%3A443%2Fannounce&tr=https%3A%2F%2Ftracker.anibt.net%2Fannounce&tr=http%3A%2F%2Ftracker.tfile.me%2Fannounce',
   );
 
-  RqbitClient? _client;
   String _currentTorrentId = '';
   String _currentTorrentName = '';
   List<TorrentFile> _torrentFiles = [];
@@ -158,7 +157,6 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
       if (existing != null) {
         setState(() {
           _server = existing;
-          _client = RqbitClient(baseUrl: existing.url.toString());
           _status = 'Online';
           _response = '已恢复连接至已在运行的 rqbit 服务: ${existing.url}';
         });
@@ -171,7 +169,6 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
       final server = await RqbitServer.start(downloadDir: downloadDir.path);
       setState(() {
         _server = server;
-        _client = RqbitClient(baseUrl: server.url.toString());
         _status = 'Online';
         _response = 'rqbit 服务自启动成功:\n${server.url}\n存储路径: ${downloadDir.path}';
       });
@@ -189,10 +186,10 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
   }
 
   Future<void> _restoreActiveTorrents() async {
-    final client = _client;
-    if (client == null) return;
+    final server = _server;
+    if (server == null) return;
     try {
-      final res = await client.listTorrents();
+      final res = await server.listTorrents();
       if (res.torrents.isNotEmpty) {
         final first = res.torrents.first;
         final id = (first.id?.toString() ?? first.infoHash);
@@ -223,7 +220,6 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
         await server.stop();
         setState(() {
           _server = null;
-          _client = null;
           _status = 'Offline';
           _response = '服务已成功停止';
           _currentTorrentId = '';
@@ -245,19 +241,19 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
   }
 
   Future<void> _probeHttp() async {
-    final client = _client;
-    if (client == null) {
+    final server = _server;
+    if (server == null) {
       setState(() {
-        _response = '错误: 服务未运行或 Client 未初始化';
+        _response = '错误: 服务未运行';
       });
       return;
     }
     setState(() {
       _loading = true;
-      _response = '正在请求 RqbitClient.listTorrents() ...';
+      _response = '正在请求 server.listTorrents() ...';
     });
     try {
-      final res = await client.listTorrents();
+      final res = await server.listTorrents();
       setState(() {
         _response =
             'HTTP 探测成功 (Dio 强类型响应):\n已载入种子任务数: ${res.torrents.length}\n${jsonEncode(res.toJson())}';
@@ -274,8 +270,8 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
   }
 
   Future<void> _addMagnet() async {
-    final client = _client;
-    if (client == null) {
+    final server = _server;
+    if (server == null) {
       setState(() {
         _response = '错误: 请先启动 rqbit 服务';
       });
@@ -292,7 +288,7 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
 
     setState(() {
       _addingTorrent = true;
-      _response = '正在通过 RqbitClient 添加种子任务...';
+      _response = '正在通过 RqbitServer 添加种子任务...';
       _torrentFiles = [];
       _currentTorrentName = '';
       _currentTorrentId = '';
@@ -300,7 +296,7 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
     });
 
     try {
-      final res = await client.addTorrent(
+      final res = await server.addTorrent(
         magnet,
         options: const AddTorrentOptions(overwrite: true),
       );
@@ -349,14 +345,14 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
   }
 
   Future<void> _fetchTorrentDetails() async {
-    final client = _client;
-    if (client == null || _currentTorrentId.isEmpty) {
+    final server = _server;
+    if (server == null || _currentTorrentId.isEmpty) {
       return;
     }
 
     try {
       final int id = int.tryParse(_currentTorrentId) ?? 0;
-      final details = await client.getTorrentDetails(id);
+      final details = await server.getTorrentDetails(id);
 
       if (mounted) {
         setState(() {
@@ -421,8 +417,8 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
   }
 
   Future<void> _deleteTorrent() async {
-    final client = _client;
-    if (client == null || _currentTorrentId.isEmpty) {
+    final server = _server;
+    if (server == null || _currentTorrentId.isEmpty) {
       return;
     }
 
@@ -436,7 +432,7 @@ class _BentoExampleAppState extends State<BentoExampleApp> {
 
     try {
       final int id = int.tryParse(_currentTorrentId) ?? 0;
-      await client.deleteTorrent(id);
+      await server.deleteTorrent(id);
 
       final deletedName = _currentTorrentName.isNotEmpty
           ? _currentTorrentName

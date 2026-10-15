@@ -5,7 +5,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi';
 
+import 'package:dio/dio.dart';
 import 'package:ffi/ffi.dart';
+
+import 'client.dart';
 
 // FFI C-ABI Native Bindings
 @Native<Int32 Function(Pointer<Utf8>)>(symbol: 'rqbit_start')
@@ -48,18 +51,32 @@ class RqbitException implements Exception {
 }
 
 /// Controller for the embedded rqbit HTTP service.
-class RqbitServer {
+///
+/// Extends [RqbitClient] so that a single server instance can manage both
+/// the native background process lifecycle and execute all HTTP REST API calls.
+class RqbitServer extends RqbitClient {
   final int port;
   final Uri url;
   bool _isStopped = false;
 
-  RqbitServer._({required this.port, required this.url});
+  RqbitServer._({
+    required this.port,
+    required this.url,
+    super.dio,
+    super.connectTimeout,
+    super.receiveTimeout,
+  }) : super(baseUrl: url.toString());
 
   /// Returns the currently running server instance in this process if already started, or null.
   ///
   /// Useful for Flutter Hot Restart, where Dart memory is reset while the underlying native
   /// Rust daemon stays alive in the host process.
-  static RqbitServer? current({String host = '127.0.0.1'}) {
+  static RqbitServer? current({
+    String host = '127.0.0.1',
+    Dio? dio,
+    Duration connectTimeout = const Duration(seconds: 5),
+    Duration receiveTimeout = const Duration(seconds: 15),
+  }) {
     if (_rqbitIsRunning() == 1) {
       final port = _rqbitGetPort();
       if (port > 0) {
@@ -69,6 +86,9 @@ class RqbitServer {
         return RqbitServer._(
           port: port,
           url: Uri.parse('http://$normalizedHost:$port/'),
+          dio: dio,
+          connectTimeout: connectTimeout,
+          receiveTimeout: receiveTimeout,
         );
       }
     }
@@ -81,9 +101,17 @@ class RqbitServer {
     required String downloadDir,
     String bindAddr = '127.0.0.1:0',
     String? dhtPersistencePath,
+    Dio? dio,
+    Duration connectTimeout = const Duration(seconds: 5),
+    Duration receiveTimeout = const Duration(seconds: 15),
   }) async {
     final host = bindAddr.split(':').first;
-    final existing = current(host: host);
+    final existing = current(
+      host: host,
+      dio: dio,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
+    );
     if (existing != null) {
       return existing;
     }
@@ -92,6 +120,9 @@ class RqbitServer {
       bindAddr: bindAddr,
       dhtPersistencePath: dhtPersistencePath,
       attachIfRunning: true,
+      dio: dio,
+      connectTimeout: connectTimeout,
+      receiveTimeout: receiveTimeout,
     );
   }
 
@@ -108,10 +139,18 @@ class RqbitServer {
     String bindAddr = '127.0.0.1:0',
     String? dhtPersistencePath,
     bool attachIfRunning = false,
+    Dio? dio,
+    Duration connectTimeout = const Duration(seconds: 5),
+    Duration receiveTimeout = const Duration(seconds: 15),
   }) async {
     final host = bindAddr.split(':').first;
     if (attachIfRunning) {
-      final existing = current(host: host);
+      final existing = current(
+        host: host,
+        dio: dio,
+        connectTimeout: connectTimeout,
+        receiveTimeout: receiveTimeout,
+      );
       if (existing != null) {
         return existing;
       }
@@ -130,7 +169,12 @@ class RqbitServer {
       if (res <= 0) {
         // If error is code -6 (already running) and attachIfRunning is true, recover gracefully.
         if (res == -6 && attachIfRunning) {
-          final existing = current(host: host);
+          final existing = current(
+            host: host,
+            dio: dio,
+            connectTimeout: connectTimeout,
+            receiveTimeout: receiveTimeout,
+          );
           if (existing != null) {
             return existing;
           }
@@ -145,7 +189,13 @@ class RqbitServer {
           : host;
       final url = Uri.parse('http://$normalizedHost:$port/');
 
-      return RqbitServer._(port: port, url: url);
+      return RqbitServer._(
+        port: port,
+        url: url,
+        dio: dio,
+        connectTimeout: connectTimeout,
+        receiveTimeout: receiveTimeout,
+      );
     } finally {
       malloc.free(cJson);
     }
@@ -154,10 +204,11 @@ class RqbitServer {
   /// Returns whether the server is currently running.
   bool get isRunning => !_isStopped && _rqbitIsRunning() == 1;
 
-  /// Gracefully stops the rqbit HTTP service.
+  /// Gracefully stops the rqbit HTTP service and releases underlying client resources.
   Future<void> stop() async {
     if (_isStopped) return;
     _isStopped = true;
+    dio.close(force: true);
     final res = _rqbitStop();
     if (res != 0 && res != -1) {
       final err = _getRustLastError() ?? 'Unknown error';

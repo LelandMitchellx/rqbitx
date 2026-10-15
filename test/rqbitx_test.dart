@@ -46,6 +46,13 @@ void main() {
         client.close();
       }
 
+      // 4.1 验证 RqbitServer 继承自 RqbitClient，可以直接调用所有 REST API
+      expect(server, isA<RqbitClient>());
+      final torrentList = await server.listTorrents();
+      expect(torrentList.torrents, isEmpty);
+      final serverInfo = await server.getServerInfo();
+      expect(serverInfo.version, isNotEmpty);
+
       // 5. 停止服务
       await server.stop();
       expect(server.isRunning, isFalse);
@@ -123,6 +130,32 @@ void main() {
         } finally {
           client.close();
         }
+        await server.stop();
+      } finally {
+        if (await tempDir.exists()) {
+          await tempDir.delete(recursive: true);
+        }
+      }
+    },
+  );
+
+  test(
+    'RqbitServer directly executes RqbitClient APIs as a unified instance',
+    () async {
+      final tempDir = await Directory.systemTemp.createTemp(
+        'rqbitx_client_inherit_',
+      );
+      try {
+        final server = await RqbitServer.start(downloadDir: tempDir.path);
+        expect(server, isA<RqbitClient>());
+
+        // 直接通过 server 调用各类 RqbitClient 接口
+        final stats = await server.getSessionStats();
+        expect(stats.counters.fetchedBytes, equals(0));
+
+        final limits = await server.getLimits();
+        expect(limits, isNotNull);
+
         await server.stop();
       } finally {
         if (await tempDir.exists()) {

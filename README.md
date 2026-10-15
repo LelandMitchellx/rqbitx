@@ -54,11 +54,12 @@ dependencies:
   dio: ^5.9.0
 ```
 
-### 2. 启动或附着后台守护进程
+### 2. 启动守护进程并直接调用 API
+
+`RqbitServer` 直接继承自 `RqbitClient`，单实例兼具后台生命周期管控与全量强类型 HTTP API：
 
 ```dart
 import 'package:rqbitx/rqbitx.dart';
-import 'package:rqbitx/client.dart';
 
 void main() async {
   // 1. 启动或复用常驻守护服务 (自动分配空闲端口)
@@ -69,12 +70,11 @@ void main() async {
 
   print('rqbit 服务运行中: ${server.url}'); // http://127.0.0.1:<port>/
 
-  // 2. 初始化官方 REST 客户端
-  final client = RqbitClient(server.url);
-
-  // 3. 检查服务端信息
-  final serverInfo = await client.getServerInfo();
+  // 2. 直接通过 server 实例调用 REST API（无需额外创建 Client）
+  final serverInfo = await server.getServerInfo();
   print('Server: ${serverInfo.server}, Version: ${serverInfo.version}');
+
+  // 提示：若仅连接远程已有的 rqbit 节点，依然可单独使用 RqbitClient(baseUrl: '...')
 }
 ```
 
@@ -157,7 +157,7 @@ rqbitx/
 │   ├── client_test.dart     # Dio 客户端全量 Contract 契约测试
 │   └── models_test.dart     # 领域模型反序列化契约测试
 ├── docs/
-│   ├── adr/                 # 架构决策记录 (ADR 0001 ~ 0008)
+│   ├── adr/                 # 架构决策记录 (ADR 0001 ~ 0009)
 │   └── prd/                 # 产品需求文档 (PRD 0001 ~ 0002)
 └── example/                 # 示例工程：纯平 Bento Grid 流媒体播放器
 ```
@@ -178,6 +178,7 @@ rqbitx/
 | [ADR-0006](docs/adr/0006-dark-light-theme-switching.md) | 原生 ThemeData 驱动的深浅色三态切换 | `Accepted` | 系统/浅色/深色无缝流转，彻底删除冗余自定义颜色类 |
 | [ADR-0007](docs/adr/0007-dio-http-client-and-rust-dto-mapping.md) | Dio HTTP 客户端与 1:1 Rust 领域模型 | `Accepted` | 提供强类型空安全 Dart SDK，杜绝松散 Map 解析 |
 | [ADR-0008](docs/adr/0008-complete-librqbit-http-api.md) | 完整对齐 librqbit 官方 HTTP API 规范 | `Accepted` | 全量补齐会话、DHT、Peer、M3U8 等 10+ 官方高级接口 |
+| [ADR-0009](docs/adr/0009-server-inherits-client-unified-instance.md) | RqbitServer 继承 RqbitClient 统一单实例设计 | `Accepted` | 单实例兼具守护进程生命周期与全量 REST API，联动关闭底层连接池 |
 
 ---
 
