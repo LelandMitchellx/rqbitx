@@ -5,3 +5,8 @@ export 'models/torrent_details.dart';
 export 'models/add_torrent_response.dart';
 export 'models/torrent_list_response.dart';
 export 'models/add_torrent_options.dart';
+export 'models/server_info.dart';
+export 'models/limits_config.dart';
+export 'models/session_stats.dart';
+export 'models/dht_stats.dart';
+export 'models/peer_stats.dart';

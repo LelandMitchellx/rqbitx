@@ -90,7 +90,7 @@ void main() {
             'length': 50000000,
             'included': true,
             'attributes': {},
-          }
+          },
         ],
         'stats': {
           'state': 'paused',
@@ -99,7 +99,7 @@ void main() {
           'uploaded_bytes': 0,
           'total_bytes': 50000000,
           'finished': false,
-        }
+        },
       };
       final details = TorrentDetails.fromJson(json);
       expect(details.id, 1);
@@ -125,7 +125,10 @@ void main() {
       };
       final addResp = AddTorrentResponse.fromJson(json);
       expect(addResp.id, 2);
-      expect(addResp.details.infoHash, 'feedbeef00112233445566778899aabbccddeeff');
+      expect(
+        addResp.details.infoHash,
+        'feedbeef00112233445566778899aabbccddeeff',
+      );
       expect(addResp.outputFolder, '/tmp/download');
       expect(addResp.seenPeers, ['127.0.0.1:6881']);
     });
@@ -144,8 +147,8 @@ void main() {
             'info_hash': 'hash2',
             'output_folder': '/downloads',
             'total_pieces': 20,
-          }
-        ]
+          },
+        ],
       };
       final list = TorrentListResponse.fromJson(json);
       expect(list.torrents.length, 2);
@@ -167,6 +170,137 @@ void main() {
       expect(queryParams['only_files'], '0,2');
       expect(queryParams['is_url'], 'true');
       expect(queryParams['list_only'], 'false');
+    });
+
+    test('ServerInfo deserializes correctly', () {
+      final json = {
+        'server': 'rqbit',
+        'version': '9.0.1',
+        'apis': {'GET /': 'list apis', 'GET /stats': 'session stats'},
+      };
+      final info = ServerInfo.fromJson(json);
+      expect(info.server, 'rqbit');
+      expect(info.version, '9.0.1');
+      expect(info.apis['GET /'], 'list apis');
+      expect(info.toJson(), json);
+    });
+
+    test('LimitsConfig deserializes correctly', () {
+      final json = {'upload_bps': 1048576, 'download_bps': 5242880};
+      final limits = LimitsConfig.fromJson(json);
+      expect(limits.uploadBps, 1048576);
+      expect(limits.downloadBps, 5242880);
+      expect(limits.toJson(), json);
+    });
+
+    test('SessionStatsSnapshot deserializes correctly', () {
+      final json = {
+        'counters': {
+          'fetched_bytes': 1000,
+          'uploaded_bytes': 2000,
+          'blocked_incoming': 10,
+          'blocked_outgoing': 20,
+        },
+        'download_speed': {'mbps': 1.5, 'human_readable': '1.50 MiB/s'},
+        'upload_speed': {'mbps': 0.5, 'human_readable': '500 KiB/s'},
+        'peers': {
+          'queued': 1,
+          'connecting': 2,
+          'live': 3,
+          'live_tcp': 3,
+          'live_utp': 0,
+          'live_socks': 0,
+          'seen': 10,
+          'dead': 5,
+          'not_needed': 0,
+          'steals': 0,
+        },
+        'uptime_seconds': 120,
+        'connections': {
+          'socks': {
+            'v4': {'attempts': 0, 'successes': 0, 'errors': 0},
+            'v6': {'attempts': 0, 'successes': 0, 'errors': 0},
+          },
+          'tcp': {
+            'v4': {'attempts': 5, 'successes': 3, 'errors': 2},
+            'v6': {'attempts': 0, 'successes': 0, 'errors': 0},
+          },
+          'utp': {
+            'v4': {'attempts': 0, 'successes': 0, 'errors': 0},
+            'v6': {'attempts': 0, 'successes': 0, 'errors': 0},
+          },
+        },
+      };
+      final stats = SessionStatsSnapshot.fromJson(json);
+      expect(stats.uptimeSeconds, 120);
+      expect(stats.counters.fetchedBytes, 1000);
+      expect(stats.downloadSpeed.mbps, 1.5);
+      expect(stats.peers.liveTcp, 3);
+      expect(stats.connections.tcp.v4.attempts, 5);
+      expect(stats.toJson(), json);
+    });
+
+    test('DhtStats and RoutingTable deserialize correctly', () {
+      final statsJson = {
+        'id': '0123456789abcdef0123456789abcdef01234567',
+        'outstanding_requests': 2,
+        'routing_table_size': 42,
+        'routing_table_size_v6': 10,
+      };
+      final dht = DhtStats.fromJson(statsJson);
+      expect(dht.id, '0123456789abcdef0123456789abcdef01234567');
+      expect(dht.routingTableSize, 42);
+      expect(dht.toJson(), statsJson);
+
+      final tableJson = {
+        'v4': {
+          'id': 'abc',
+          'size': 5,
+          'buckets': {'data': []},
+        },
+        'v6': {
+          'id': 'def',
+          'size': 2,
+          'buckets': {'data': []},
+        },
+      };
+      final tables = DhtRoutingTableResponse.fromJson(tableJson);
+      expect(tables.v4.size, 5);
+      expect(tables.v6.id, 'def');
+      expect(tables.toJson(), tableJson);
+    });
+
+    test('PeerStatsSnapshot deserializes correctly', () {
+      final json = {
+        'peers': {
+          '1.2.3.4:6881': {
+            'counters': {
+              'incoming_connections': 1,
+              'fetched_bytes': 500,
+              'uploaded_bytes': 200,
+              'total_time_connecting_ms': 50,
+              'connection_attempts': 1,
+              'connections': 1,
+              'errors': 0,
+              'fetched_chunks': 5,
+              'downloaded_and_checked_pieces': 1,
+              'total_piece_download_ms': 100,
+              'times_stolen_from_me': 0,
+              'times_i_stole': 0,
+            },
+            'state': 'live',
+            'conn_kind': 'tcp',
+            'client_name': 'qBittorrent/4.5.0',
+          },
+        },
+      };
+      final snapshot = PeerStatsSnapshot.fromJson(json);
+      expect(snapshot.peers.containsKey('1.2.3.4:6881'), true);
+      final p = snapshot.peers['1.2.3.4:6881']!;
+      expect(p.state, 'live');
+      expect(p.clientName, 'qBittorrent/4.5.0');
+      expect(p.counters.fetchedBytes, 500);
+      expect(snapshot.toJson(), json);
     });
   });
 }
