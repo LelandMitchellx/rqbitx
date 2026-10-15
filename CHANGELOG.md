@@ -34,6 +34,7 @@
 | **11** | `[业务提案]` | 全量对齐 librqbit 官方 HTTP API 与高级功能模型 | [ADR-0008](docs/adr/0008-complete-librqbit-http-api.md) · Commit [`95e22da`](https://github.com/LelandMitchellx/rqbitx/commit/95e22da) |
 | **12** | `[工程沉淀]` | 生产就绪度安全审计、生成 README.md 与 GitHub 推送 | Commit [`886efc3`](https://github.com/LelandMitchellx/rqbitx/commit/886efc3) |
 | **13** | `[架构重构]` | `RqbitServer` 继承 `RqbitClient`，实现单实例统一设计 | [ADR-0009](docs/adr/0009-server-inherits-client-unified-instance.md) · Commit [`be16781`](https://github.com/LelandMitchellx/rqbitx/commit/be16781) |
+| **14** | `[工程复盘]` | 补全历次里程碑 Retro 复盘，建立 `CODING_STANDARDS.md` 与 AGENTS 导航 | [Retro 0001~0003](docs/retro/) · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) |
 
 ---
 
@@ -189,6 +190,17 @@
   3. 彻底重构 `example/lib/main.dart`，移除冗余的 `_client` 变量，简化 9 处调用链路；
   4. 扩充单实例直接调用测试，全包测试通过数达到 34 个。
 - **凭证**：[ADR-0009](docs/adr/0009-server-inherits-client-unified-instance.md) · Commit [`be16781`](https://github.com/LelandMitchellx/rqbitx/commit/be16781)
+
+---
+
+### 阶段 14：补全历次里程碑 Retro 复盘与代码审查基线
+- **类型**：`[工程复盘与环境进化]`
+- **触发背景**：用户要求：“retro 都没写，我们补一下”。按照 Matt Pocock 规范，反思历次会话摩擦，改进 Agent 开发环境与审查基准。
+- **改动详情**：
+  1. 编写并归档 3 期 Retro 详细复盘文档：`docs/retro/0001`（FFI 底座与 Android 工具链）、`docs/retro/0002`（流媒体边下边播与 Hot Restart 守护常驻）、`docs/retro/0003`（Dio 客户端、单实例继承与全景台账）；
+  2. 建立根目录 `CODING_STANDARDS.md`，专供 Reviewer Agent 审查高阶架构、跨平台沙盒路径隔离、URL 构造、单实例深模块与安全基线准则；
+  3. 在 `AGENTS.md` 增加指向 `CODING_STANDARDS.md`、`CHANGELOG.md` 及 `docs/retro/` 的导航指针。
+- **凭证**：`docs/retro/` · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) · `AGENTS.md`
 
 ---
 
