@@ -66,8 +66,17 @@
 
 ---
 
-## 8. 变更必留痕铁律 (Mandatory Changelog Traceability)
+## 8. Android 平台 TLS 零 JNI 与 WebPKI 纯 Rust 闭环 (Pure-Rust WebPKI TLS)
+- **准则**：严禁在 Native Assets C-ABI 动态库中隐式依赖宿主虚拟机（JNI/JVM）进行平台证书链校验。
+- **审查要点**：
+  - Android 移动环境下运行的 Rust 原生库（`librqbitx.so`）必须通过静态嵌入 Mozilla WebPKI 根证书（`webpki-root-certs`）进行 TLS 校验，杜绝因未初始化 JNI 上下文调用 Java `TrustManager` 导致的致命运行时 Panic；
+  - Cargo 依赖中必须使用 `[patch.crates-io]` 本地补丁接管 `rustls-platform-verifier`，并将 Android target 强制重定向至 WebPKI 纯 Rust 分支；
+  - 详见 [ADR-0010](docs/adr/0010-android-webpki-pure-rust-tls-verifier.md)。
+
+---
+
+## 9. 变更必留痕铁律 (Mandatory Changelog Traceability)
 - **准则**：杜绝黑盒变更，每一次改动都必须可追溯。
 - **审查要点**：
   - 任何新增需求提案、Bug 修复或重大架构重构，在提交代码的同时**必须同步更新根目录 `CHANGELOG.md`**；
-  - 记录必须包含：阶段编号、变更类型、产生背景（Why）、具体修改内容（What）、以及关联的 ADR/PRD/Commit。
+  - 记录必须包含：阶段编号、变更类型、产生背景（Why）、具体修改内容（What）、以及关联的 ADR/PRD/Retro/Commit。

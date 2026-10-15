@@ -73,8 +73,6 @@ void main() async {
   // 2. 直接通过 server 实例调用 REST API（无需额外创建 Client）
   final serverInfo = await server.getServerInfo();
   print('Server: ${serverInfo.server}, Version: ${serverInfo.version}');
-
-  // 提示：若仅连接远程已有的 rqbit 节点，依然可单独使用 RqbitClient(baseUrl: '...')
 }
 ```
 
@@ -82,7 +80,7 @@ void main() async {
 
 ```dart
 // 添加磁力链接
-final addResponse = await client.addTorrent(
+final addResponse = await server.addTorrent(
   magnetUri: 'magnet:?xt=urn:btih:...',
   options: const AddTorrentOptions(
     overwrite: false,
@@ -93,7 +91,7 @@ final addResponse = await client.addTorrent(
 final torrentId = addResponse.id!;
 
 // 查询任务详情与文件列表
-final details = await client.getTorrentDetails(torrentId);
+final details = await server.getTorrentDetails(torrentId);
 print('任务名称: ${details.name}, 状态: ${details.state}');
 
 for (final file in details.files) {
@@ -105,69 +103,44 @@ final streamUrl = server.url.resolve('/torrents/$torrentId/stream/${details.file
 print('流媒体播放地址: $streamUrl');
 
 // 暂停与恢复
-await client.pauseTorrent(torrentId);
-await client.startTorrent(torrentId);
+await server.pauseTorrent(torrentId);
+await server.startTorrent(torrentId);
 
 // 彻底删除任务并清理磁盘物理文件
-await client.deleteTorrent(torrentId);
-```
-
-### 4. 获取全局会话统计与限速管理
-
-```dart
-// 获取全局网络吞吐与 Peer 统计
-final stats = await client.getSessionStats();
-print('下载速率: ${stats.counters.fetchedBytes.humanReadable}/s');
-print('连接 Peers 数: ${stats.aggregatePeerStats.live}');
-
-// 调整会话级限速带宽 (字节/秒)
-await client.updateLimits(
-  const LimitsConfig(
-    downloadBps: 10 * 1024 * 1024, // 10 MB/s
-    uploadBps: 2 * 1024 * 1024,     // 2 MB/s
-  ),
-);
+await server.deleteTorrent(torrentId);
 ```
 
 ---
 
-## 📂 项目目录规约
+## 📂 纯正 Matt Pocock 架构目录规约
+
+本项目严格遵循 Matt Pocock 单上下文工程规约（无冗余文档、单一事实来源）：
 
 ```text
 rqbitx/
-├── lib/
-│   ├── rqbitx.dart          # FFI C-ABI 极简接缝与 RqbitServer 生命周期管理
-│   ├── client.dart          # 基于 Dio 封装的官方 RqbitClient REST API
-│   ├── models.dart          # 领域模型集中导出入口
-│   └── models/              # 1:1 Rust 领域 DTO
-│       ├── server_info.dart       # 服务元数据与 API 路由
-│       ├── torrent_details.dart   # 种子详情与文件清单
-│       ├── torrent_stats.dart     # 实时传输速率与分片进度
-│       ├── session_stats.dart     # 全局会话与吞吐统计
-│       ├── dht_stats.dart         # DHT 节点与路由表
-│       ├── peer_stats.dart        # Peer 延迟、客户端标识与计数器
-│       └── limits_config.dart     # 全局限速配置
-├── rust/
-│   ├── src/lib.rs           # 极简 Rust C-ABI 导出与 Tokio 守护服务
-│   └── Cargo.toml           # librqbit 依赖配置
-├── hook/
-│   └── build.dart           # Flutter Native Assets 编译钩子
-├── test/
-│   ├── rqbitx_test.dart     # 真实 FFI 与底层端点测试
-│   ├── client_test.dart     # Dio 客户端全量 Contract 契约测试
-│   └── models_test.dart     # 领域模型反序列化契约测试
+├── lib/                     # Dart API, Client 与 1:1 Rust 领域 DTO
+├── rust/                    # Rust Native Assets 底座层与 Tokio 守护服务
+├── hook/                    # Flutter Native Assets 编译钩子
+├── test/                    # 单元测试与契约测试 (34/34 passing)
+├── GLOSSARY.md              # 领域统一语言词汇表 (Ubiquitous Language)
+├── CODING_STANDARDS.md      # Reviewer 高阶架构决策与平台安全审查标准
+├── CHANGELOG.md             # 演进与修改记录全景台账 (Single Source of Truth)
+├── AGENTS.md                # AI Agent 技能极简路由指针
 ├── docs/
-│   ├── adr/                 # 架构决策记录 (ADR 0001 ~ 0009)
-│   └── prd/                 # 产品需求文档 (PRD 0001 ~ 0002)
+│   ├── adr/                 # 架构决策记录 (ADR 0001 ~ 0010)
+│   └── agents/              # Agent 基础设施配置 (domain, issue-tracker, triage)
+├── .scratch/                # 敏捷需求规格 (spec.md) 与工单树 (issues/)
 └── example/                 # 示例工程：纯平 Bento Grid 流媒体播放器
 ```
 
 ---
 
-## 📜 演进台账与决策记录 (Changelog & ADRs)
+## 📜 决策记录与规范体系 (Standards & ADRs)
 
-- 📋 **全景演进与修改记录台账**：从最初核心需求到历次 Bug 修复、提案演进的全景溯源，详见 [CHANGELOG.md](CHANGELOG.md)。
-- 📐 **架构决策记录 (ADR)**：全量重大架构与设计决策均已沉淀归档：
+- 📖 **领域统一语言**：核心实体与名词字典定义，详见 [GLOSSARY.md](GLOSSARY.md)。
+- 📋 **全景演进记录台账**：单事实来源记录历次需求、修复与重构，详见 [CHANGELOG.md](CHANGELOG.md)。
+- 🛡️ **审查红线基线**：自动化测试之外的架构决策与平台安全性审查，详见 [CODING_STANDARDS.md](CODING_STANDARDS.md)。
+- 📐 **架构决策记录 (ADR)**：
 
 | 编号 | 标题 | 状态 | 核心价值 |
 | :--- | :--- | :---: | :--- |
@@ -180,6 +153,7 @@ rqbitx/
 | [ADR-0007](docs/adr/0007-dio-http-client-and-rust-dto-mapping.md) | Dio HTTP 客户端与 1:1 Rust 领域模型 | `Accepted` | 提供强类型空安全 Dart SDK，杜绝松散 Map 解析 |
 | [ADR-0008](docs/adr/0008-complete-librqbit-http-api.md) | 完整对齐 librqbit 官方 HTTP API 规范 | `Accepted` | 全量补齐会话、DHT、Peer、M3U8 等 10+ 官方高级接口 |
 | [ADR-0009](docs/adr/0009-server-inherits-client-unified-instance.md) | RqbitServer 继承 RqbitClient 统一单实例设计 | `Accepted` | 单实例兼具守护进程生命周期与全量 REST API，联动关闭底层连接池 |
+| [ADR-0010](docs/adr/0010-android-webpki-pure-rust-tls-verifier.md) | Android 静态 WebPKI 根证书与零 JNI 纯 Rust TLS 校验体系 | `Accepted` | 彻底杜绝 Android 未注入 JVM 上下文导致的崩溃 |
 
 ---
 
@@ -189,7 +163,7 @@ rqbitx/
 > 详经严谨的代码审查，投产前必须解决移动端原生系统规约限制：
 
 - [ ] **P0-1: 修复 Android Release 清单网络权限**：在 `main/AndroidManifest.xml` 中补齐 `INTERNET` 与 `ACCESS_NETWORK_STATE`。
-- [ ] **P0-2: TLS 证书去 JNI 化**：引入纯 Rust `webpki-roots` 彻底解决 Android 缺失 JNI 初始化引发的 HTTPS Tracker 崩溃。
+- [x] **P0-2: TLS 证书去 JNI 化**：已通过 `rustls-platform-verifier` 本地 WebPKI 补丁彻底解决 Android 缺失 JNI 初始化引发的崩溃（详见 [ADR-0010](docs/adr/0010-android-webpki-pure-rust-tls-verifier.md) 与 [CODING_STANDARDS.md](CODING_STANDARDS.md)）。
 - [ ] **P0-3: 本地 HTTP 服务 Bearer Token 鉴权**：守护进程生成随机 Token 校验请求头，防止本地第三方网页恶意 CSRF 删文件。
 - [ ] **P0-4: 移动端专属沙盒存储**：将默认下载路径从可能被 OS 自动清空的 Cache 迁移至持久性外部沙盒目录。
 - [ ] **P1-1: 移动端后台保活**：接入 Android 前台服务 (Foreground Service) 与 WakeLock，杜绝切后台被系统冻结网络。
@@ -198,7 +172,6 @@ rqbitx/
 
 ## 🤝 参与贡献与许可证
 
-欢迎提交 Issue 和 Pull Request！本项目严格遵循代码格式化与规范提交：
 - 静态分析：`flutter analyze` (零 warning/error 准入)
 - 单元测试：`flutter test` (34/34 测试全量通过)
 

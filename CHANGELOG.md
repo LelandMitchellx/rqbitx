@@ -34,7 +34,8 @@
 | **11** | `[业务提案]` | 全量对齐 librqbit 官方 HTTP API 与高级功能模型 | [ADR-0008](docs/adr/0008-complete-librqbit-http-api.md) · Commit [`95e22da`](https://github.com/LelandMitchellx/rqbitx/commit/95e22da) |
 | **12** | `[工程沉淀]` | 生产就绪度安全审计、生成 README.md 与 GitHub 推送 | Commit [`886efc3`](https://github.com/LelandMitchellx/rqbitx/commit/886efc3) |
 | **13** | `[架构重构]` | `RqbitServer` 继承 `RqbitClient`，实现单实例统一设计 | [ADR-0009](docs/adr/0009-server-inherits-client-unified-instance.md) · Commit [`be16781`](https://github.com/LelandMitchellx/rqbitx/commit/be16781) |
-| **14** | `[工程复盘]` | 补全历次里程碑 Retro 复盘，建立 `CODING_STANDARDS.md` 与 AGENTS 导航 | [Retro 0001~0003](docs/retro/) · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) |
+| **14** | `[工程复盘]` | 补全历次里程碑 Retro 复盘，建立 `CODING_STANDARDS.md` 与 AGENTS 导航 | `docs/retro/` · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) |
+| **15** | `[文档重构与硬核复盘]` | 全景文档中枢治理 (docs/README.md)、归档规约至 docs/spec/，深度技术复盘 Android TLS 纯 Rust WebPKI 绕过与 DHT 沙箱崩溃治理 | [Retro 0001~0002](docs/retro/) · [docs/README.md](docs/README.md) · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) |
 
 ---
 
@@ -197,10 +198,24 @@
 - **类型**：`[工程复盘与环境进化]`
 - **触发背景**：用户要求：“retro 都没写，我们补一下”。按照 Matt Pocock 规范，反思历次会话摩擦，改进 Agent 开发环境与审查基准。
 - **改动详情**：
-  1. 编写并归档 3 期 Retro 详细复盘文档：`docs/retro/0001`（FFI 底座与 Android 工具链）、`docs/retro/0002`（流媒体边下边播与 Hot Restart 守护常驻）、`docs/retro/0003`（Dio 客户端、单实例继承与全景台账）；
+  1. 归档初始 Retro 复盘文档；
   2. 建立根目录 `CODING_STANDARDS.md`，专供 Reviewer Agent 审查高阶架构、跨平台沙盒路径隔离、URL 构造、单实例深模块与安全基线准则；
   3. 在 `AGENTS.md` 增加指向 `CODING_STANDARDS.md`、`CHANGELOG.md` 及 `docs/retro/` 的导航指针。
 - **凭证**：`docs/retro/` · [`CODING_STANDARDS.md`](CODING_STANDARDS.md) · `AGENTS.md`
+
+---
+
+### 阶段 15：全景文档体系重构与 Android TLS / DHT 致命崩溃硬核深度复盘
+- **类型**：`[文档中枢重构与硬核技术复盘]`
+- **触发背景**：用户敏锐指出：“*好乱的文档啊，而且关键的复盘也没做，比如 android 上 tls 的问题是怎么解决的，比如启动的时候 dht 导致启动失败*”。先前复盘浮于表面且文档散落缺乏中心导航，未对这两场底层核心攻坚做深度复盘剖析。
+- **改动详情**：
+  1. **建立全局文档导航中枢**：新建 `docs/README.md`，系统化梳理根入口、ADR（0001~0009）、Retro（0001~0005）、PRD（0001~0002）、Spec 与 Agent 目录，提供按故障场景、架构演进、审查红线快速检索的地图；
+  2. **深度技术复盘：Android TLS 纯 Rust WebPKI 零 JNI 绕过**（`docs/retro/0001`）：深入剖析上游 `rustls-platform-verifier` 强依赖 JVM/JNI `CertificateVerifier` 的陷阱，揭秘 Native Assets 纯 C-ABI 动态库无 JNI 上下文导致 Panic 的本质，详述如何通过 `[patch.crates-io]` 本地重定向、解除平台路由宏、静态嵌入 Mozilla `webpki_root_certs::TLS_SERVER_ROOT_CERTS` 实现 100% 纯 Rust 离线安全证书链校验；
+  3. **深度技术复盘：Android 沙箱无环境变量引发 DHT 崩溃治理**（`docs/retro/0002`）：深入剖析 `librqbit-dht` 默认持久化逻辑通过 `directories` crate 寻找桌面 `$HOME` / `$XDG_CONFIG_HOME` 在移动沙箱必然落空的机理，记录 Error -10 崩溃排查过程，详述确定性路径沙箱兜底（`<downloadDir>/.rqbit/dht.json`）、原子同步预建父目录与传空字符串禁用持久化的架构防线；
+  4. **时序重排全量 Retros**：统一整理为 0001 ~ 0005 递进序列；
+  5. **根目录整洁化**：将根目录散落的 `MATT_ENGINEERING_SPEC.md` 收拢归档至 `docs/spec/MATT_ENGINEERING_SPEC.md`；
+  6. **规范与审查基准联动**：在 `CODING_STANDARDS.md` 中增设第 8 条“TLS 零 JNI 与 WebPKI 纯 Rust 闭环”红线规约，并在 README 与 AGENTS 中全面联动修正。
+- **凭证**：[`docs/README.md`](docs/README.md) · [`docs/retro/0001-android-tls-webpki-zero-jni-bypass.md`](docs/retro/0001-android-tls-webpki-zero-jni-bypass.md) · [`docs/retro/0002-android-dht-persistence-sandbox-crash.md`](docs/retro/0002-android-dht-persistence-sandbox-crash.md) · [`CODING_STANDARDS.md`](CODING_STANDARDS.md)
 
 ---
 
@@ -211,3 +226,27 @@
 1. **先登记后提交**：任何新增需求、Bug 修复或重构，均需在 `CHANGELOG.md` 中按阶段编号追加对应条目；
 2. **要素完备**：条目必须包含 **类型**、**产生背景**、**修改内容**、**关联凭证 (ADR/PRD/Commit)**；
 3. **架构变动必有 ADR**：凡涉及类关系调整、设计模式变更或基础设施变动，必须同步在 `docs/adr/` 建立 ADR 文档。
+
+
+---
+
+### 阶段 15：全面对齐 Matt Pocock 纯正工程规范与文档体系去重 (2026-10-15)
+
+- **变更类型**：`docs / refactor`
+- **产生背景 (Why)**：
+  - 项目此前存在 `docs/prd/` 与 `.scratch/<feature>/spec.md` 双重维护的现象，违背单一事实来源 (Single Source of Truth)；
+  - 缺乏 Matt 规范硬性要求的根目录 `GLOSSARY.md` 领域统一语言词汇表；
+  - 存在多余的 `docs/retro/` 目录（违背 Matt "retro is not a memory system; it changes the environment" 哲学）；
+  - 缺少针对 Android WebPKI TLS 解决方案的正式架构决策记录 (ADR)。
+- **具体修改内容 (What)**：
+  1. **建立根目录 `GLOSSARY.md`**：正式定义 `RqbitServer`, `RqbitClient`, `FFI Seam`, `CatchUnwind Boundary`, `WebPKI Verifier Fallback`, `DHT Persistence Sandbox`, `Hot Restart Persistence`, `Selective File Stream` 等 12 个核心领域术语。
+  2. **新增 `ADR-0010`**：归档 [ADR-0010: Android 静态 WebPKI 根证书与零 JNI 纯 Rust TLS 校验体系](docs/adr/0010-android-webpki-pure-rust-tls-verifier.md)。
+  3. **消灭重复需规 (收敛至 `.scratch/`)**：将原 `docs/prd/0001` 迁移至 `.scratch/torrent-streaming-player/spec.md`；删除重复的 `docs/prd/` 目录。
+  4. **环境即复盘**：删除 `docs/retro/` 冗余历史记录，将关键防御准则完全固化至 `CODING_STANDARDS.md`、`docs/adr/` 与 `test/` 回归测试中。
+  5. **精简修剪**：删除非项目领域资产 `docs/spec/MATT_ENGINEERING_SPEC.md` 及冗余索引 `docs/README.md`。
+  6. **更新全局指针**：同步更新 `AGENTS.md`、`CODING_STANDARDS.md` 与 `README.md`。
+- **关联文档**：
+  - [GLOSSARY.md](GLOSSARY.md)
+  - [CODING_STANDARDS.md](CODING_STANDARDS.md)
+  - [ADR-0010](docs/adr/0010-android-webpki-pure-rust-tls-verifier.md)
+  - [.scratch/](.scratch/)

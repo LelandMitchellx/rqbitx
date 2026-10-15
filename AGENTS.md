@@ -14,10 +14,10 @@ Canonical five-role triage vocabulary: `needs-triage`, `needs-info`, `ready-for-
 
 Single-context layout (`GLOSSARY.md` + `docs/adr/` at the repo root). See `docs/agents/domain.md`.
 
-### Coding standards & Review
+### Coding standards
 
-Reviewer agent standards and high-judgment rules live in `CODING_STANDARDS.md`.
+Reviewer high-judgement rules and invariants live in `CODING_STANDARDS.md`.
 
-### Evolution & Retrospectives
+### Changelog
 
-Project-wide change ledger lives in `CHANGELOG.md`. Session retrospectives live under `docs/retro/`.
+Chronological evolution ledger lives in `CHANGELOG.md`.
