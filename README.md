@@ -164,9 +164,10 @@ rqbitx/
 
 ---
 
-## 📜 架构决策记录 (Architecture Decision Records)
+## 📜 演进台账与决策记录 (Changelog & ADRs)
 
-本项目遵循严谨的工程架构决策跟踪体系，全量设计均沉淀为 ADR：
+- 📋 **全景演进与修改记录台账**：从最初核心需求到历次 Bug 修复、提案演进的全景溯源，详见 [CHANGELOG.md](CHANGELOG.md)。
+- 📐 **架构决策记录 (ADR)**：全量重大架构与设计决策均已沉淀归档：
 
 | 编号 | 标题 | 状态 | 核心价值 |
 | :--- | :--- | :---: | :--- |
@@ -199,6 +200,6 @@ rqbitx/
 
 欢迎提交 Issue 和 Pull Request！本项目严格遵循代码格式化与规范提交：
 - 静态分析：`flutter analyze` (零 warning/error 准入)
-- 单元测试：`flutter test` (33/33 测试全量通过)
+- 单元测试：`flutter test` (34/34 测试全量通过)
 
 开源许可证：**MIT License**
