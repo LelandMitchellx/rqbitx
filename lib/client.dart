@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 
-import '../models.dart';
+import 'models.dart';
 
 /// Exception thrown by [RqbitClient] on network or HTTP protocol failure.
 class RqbitClientException implements Exception {

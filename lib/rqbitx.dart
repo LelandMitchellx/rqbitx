@@ -1,5 +1,5 @@
+export 'client.dart';
 export 'models.dart';
-export 'src/client.dart';
 
 import 'dart:async';
 import 'dart:convert';

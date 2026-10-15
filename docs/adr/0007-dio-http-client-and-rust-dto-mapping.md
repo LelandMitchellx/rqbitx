@@ -28,7 +28,7 @@
 ## 3. 具体实现架构 (Detailed Architecture)
 
 ### 3.1 强类型 DTO 结构与 Rust 源码对齐
-在 `lib/src/models/` 下建立强类型类，所有类具备安全空容错的 `fromJson` 与 `toJson`：
+在 `lib/models/` 下建立强类型类，所有类具备安全空容错的 `fromJson` 与 `toJson`：
 - `TorrentDetails` 映射自 `librqbit/src/api.rs::TorrentDetailsResponse`
 - `TorrentFile` 映射自 `librqbit/src/api.rs::TorrentDetailsResponseFile`
 - `TorrentStats` 映射自 `librqbit/src/torrent_state/stats.rs::TorrentStats`
@@ -37,7 +37,7 @@
 - `AddTorrentOptions` 映射自 `librqbit/src/http_api_types.rs::TorrentAddQueryParams`
 
 ### 3.2 Dio 客户端封装 (`RqbitClient`)
-- 位于 `lib/src/client.dart`，提供面向领域的异步方法：
+- 位于 `lib/client.dart`，提供面向领域的异步方法：
   - `listTorrents() -> Future<TorrentListResponse>`
   - `getTorrentDetails(int id) -> Future<TorrentDetails>`
   - `addTorrent(String source, {AddTorrentOptions? options}) -> Future<AddTorrentResponse>`
