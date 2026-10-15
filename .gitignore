@@ -1,0 +1,44 @@
+.pi/
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ IDEA / Android Studio
+*.iml
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Rust / Cargo
+target/
+rust/target/
+Cargo.lock
+**/*.rs.bk
+
+# C / C++ compiled objects
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+
+# Exceptions to track docs and scripts
+!.gitkeep
